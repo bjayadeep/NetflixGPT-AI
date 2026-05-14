@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Hero } from "./Hero";
-import { MovieRow, MovieRowSkeleton } from "./MovieRow";
+import { Hero } from "../components/Hero";
+import { MovieRow, MovieRowSkeleton } from "../components/MovieRow";
 import { getFeaturedMovie, getMovieCategories } from "../data/mockMovies";
 import { Movie, MovieCategory } from "../types/movie";
 

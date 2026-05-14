@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import Groq from "groq-sdk";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,12 +44,18 @@ const TMDB_TOKEN =
   process.env.TMDB_TOKEN ||
   process.env.TMDB_API_KEY;
 
-const GEMINI_API_KEY =
-  process.env.GEMINI_API_KEY;
+const GROQ_API_KEY =
+  process.env.GROQ_API_KEY;
 
-const GEMINI_MODEL =
-  process.env.GEMINI_MODEL ||
-  "gemini-2.5-flash";
+const GROQ_MODEL =
+  process.env.GROQ_MODEL ||
+  "llama-3.3-70b-versatile";
+
+const groq = GROQ_API_KEY
+  ? new Groq({
+      apiKey: GROQ_API_KEY,
+    })
+  : null;
 
 const TMDB_BASE_URL =
   process.env.TMDB_API_BASE_URL ||
@@ -309,10 +316,10 @@ app.post(
   "/api/gpt-search",
   async (req, res) => {
     try {
-      if (!GEMINI_API_KEY) {
+      if (!groq) {
         return res.status(500).json({
           error:
-            "Gemini API key missing",
+            "Groq API key missing",
         });
       }
 
@@ -325,48 +332,40 @@ app.post(
         });
       }
 
-      const endpoint =
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-      const response = await fetch(
-        endpoint,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text:
-                      `Give me 5 movie recommendations for: ${query}. Return only movie names separated by commas.`,
-                  },
-                ],
-              },
-            ],
-          }),
-        }
-      );
-
-      const data =
-        await response.json();
+      const completion =
+        await groq.chat.completions.create({
+          model: GROQ_MODEL,
+          messages: [
+            {
+              role: "system",
+              content:
+                'You are a movie recommendation expert. When given a search query, return ONLY a JSON array of 8-10 movie titles that best match. No explanation, no markdown, just the JSON array. Example: ["The Dark Knight", "Inception"]',
+            },
+            {
+              role: "user",
+              content: query,
+            },
+          ],
+        });
 
       const text =
-        data?.candidates?.[0]
-          ?.content?.parts?.[0]
-          ?.text || "";
+        completion.choices[0]?.message
+          ?.content || "[]";
 
-      const movies = text
-        .split(",")
-        .map((movie) =>
-          movie.trim()
-        )
-        .filter(Boolean)
-        .slice(0, 5);
+      const clean = text
+        .replace(/```json|```/g, "")
+        .trim();
+
+      const parsedMovies =
+        JSON.parse(clean);
+
+      const movies = Array.isArray(parsedMovies)
+        ? parsedMovies
+            .map((movie) =>
+              String(movie).trim()
+            )
+            .filter(Boolean)
+        : [];
 
       res.json({
         movies,
@@ -396,4 +395,3 @@ if (!isVercel) {
 }
 
 export default app;
-

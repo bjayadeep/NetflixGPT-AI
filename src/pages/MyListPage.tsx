@@ -1,7 +1,7 @@
 import { ArrowDownUp, Film, Heart } from "lucide-react";
 import { motion } from "motion/react";
 import { Movie } from "../types/movie";
-import { MovieCard } from "./MovieCard";
+import { MovieCard } from "../components/MovieCard";
 
 interface MyListPageProps {
   onPlayTrailer: (movie: Movie) => void;

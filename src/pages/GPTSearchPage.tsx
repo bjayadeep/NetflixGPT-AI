@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Search, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { Movie } from "../types/movie";
-import { getMovieRecommendations } from "../services/geminiMovieSearch";
+import { getMovieRecommendations } from "../services/groqSearch";
 import { tmdbService } from "../services/tmdb";
 import { transformTMDbMovieDetails } from "../utils/tmdbTransformers";
-import { MovieRow } from "./MovieRow";
+import { MovieRow } from "../components/MovieRow";
 
 interface GPTSearchPageProps {
   onPlayTrailer: (movie: Movie) => void;
@@ -83,10 +83,10 @@ export function GPTSearchPage({
       console.log(`[GPTSearch] Starting search for: "${trimmedQuery}"`);
 
       const movieNames = await getMovieRecommendations(trimmedQuery);
-      console.log(`[GPTSearch] Gemini recommended movies:`, movieNames);
+      console.log(`[GPTSearch] Groq recommended movies:`, movieNames);
 
       if (!movieNames || movieNames.length === 0) {
-        console.warn(`[GPTSearch] Gemini returned no movie names`);
+        console.warn(`[GPTSearch] Groq returned no movie names`);
         setError("Could not get recommendations. Try another search.");
         setIsSearching(false);
         return;
@@ -116,7 +116,7 @@ export function GPTSearchPage({
         setError("No movies found. Try a different search.");
       }
     } catch (error) {
-      console.error("Gemini movie search failed:", error);
+      console.error("Groq movie search failed:", error);
       setError("Search failed. Please try again.");
     } finally {
       setIsSearching(false);
@@ -170,7 +170,7 @@ export function GPTSearchPage({
           </p>
           <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-white/70 backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5 text-pink-300" />
-            Powered by Gemini AI
+            Powered by Groq AI
           </div>
         </div>
 

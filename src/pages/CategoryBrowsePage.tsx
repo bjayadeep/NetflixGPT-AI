@@ -5,7 +5,7 @@ import {
   transformTMDbMovie,
   transformTMDbTVShow,
 } from "../utils/tmdbTransformers";
-import { MovieRow } from "./MovieRow";
+import { MovieRow } from "../components/MovieRow";
 
 interface CategoryBrowsePageProps {
   pageType: "movies" | "tv";

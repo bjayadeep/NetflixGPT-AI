@@ -1,4 +1,4 @@
-import { tmdbService } from "./app/services/tmdb";
+import { tmdbService } from "./services/tmdb";
 
 async function testTMDbAPI() {
   try {

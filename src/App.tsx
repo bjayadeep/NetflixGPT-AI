@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Navbar } from "./components/Navbar";
-import { BrowsePage } from "./components/BrowsePage";
-import { CategoryBrowsePage } from "./components/CategoryBrowsePage";
-import { GPTSearchPage } from "./components/GPTSearchPage";
+import { BrowsePage } from "./pages/BrowsePage";
+import { CategoryBrowsePage } from "./pages/CategoryBrowsePage";
+import { GPTSearchPage } from "./pages/GPTSearchPage";
 import { MovieDetail } from "./components/MovieDetail";
 import { TrailerModal } from "./components/TrailerModal";
-import { MyListPage } from "./components/MyListPage";
-import { AuthPage } from "./components/AuthPage";
+import { MyListPage } from "./pages/MyListPage";
+import { AuthPage } from "./pages/AuthPage";
 import { Movie, Page } from "./types/movie";
 import {
   fromStoredMovie,
