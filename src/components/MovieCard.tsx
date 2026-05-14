@@ -48,14 +48,14 @@ export function MovieCard({
         }
         setIsHovered(false);
       }}
-      whileHover={{ scale: 1.2, y: -8, zIndex: 30 }}
+      whileHover={{ y: -8, zIndex: 30 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
       <div
         className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 shadow-xl transition-all duration-200 group-hover:shadow-2xl md:w-48 lg:w-56"
         onClick={() => onMoreInfo(movie)}
       >
-        <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800">
+        <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800 transform-gpu transition-transform duration-300 ease-out">
           <img
             src={movie.posterPath}
             alt={movie.title}
@@ -73,7 +73,7 @@ export function MovieCard({
             className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
           />
 
-          <div className="absolute left-3 top-3 rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
+          <div className="absolute left-3 top-3 z-20 rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
             {movie.rating.toFixed(1)}
           </div>
         </div>
@@ -105,7 +105,7 @@ export function MovieCard({
         )}
 
         <div
-          className={`pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
+          className={`pointer-events-none absolute inset-0 z-30 grid place-items-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
         >
           <button
             type="button"
@@ -121,7 +121,7 @@ export function MovieCard({
         </div>
 
         <div
-          className={`pointer-events-none absolute inset-0 flex flex-col justify-end p-4 transform-gpu transition-all duration-300 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`pointer-events-none absolute inset-0 z-30 flex flex-col justify-end p-4 transform-gpu transition-all duration-300 ${isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
