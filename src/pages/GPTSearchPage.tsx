@@ -2,9 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Search, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { Movie } from "../types/movie";
-import { getMovieRecommendations } from "../services/groqSearch";
+import {
+  getMovieRecommendations,
+  type MovieRecommendation,
+  type TMDbMovieRecommendation,
+} from "../services/groqSearch";
 import { tmdbService } from "../services/tmdb";
-import { transformTMDbMovieDetails } from "../utils/tmdbTransformers";
+import {
+  transformTMDbMovie,
+  transformTMDbMovieDetails,
+} from "../utils/tmdbTransformers";
 import { MovieRow } from "../components/MovieRow";
 
 interface GPTSearchPageProps {
@@ -28,6 +35,50 @@ export function GPTSearchPage({
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
   const lastInitialQueryRef = useRef("");
+
+  const getRecommendationTitle = (item: MovieRecommendation) => {
+    if (typeof item === "string") {
+      return item.trim();
+    }
+
+    const title = item.title || item.name;
+    return typeof title === "string" ? title.trim() : "";
+  };
+
+  const isTMDbMovieRecommendation = (
+    item: MovieRecommendation,
+  ): item is TMDbMovieRecommendation =>
+    typeof item === "object" &&
+    item !== null &&
+    typeof item.id === "number" &&
+    typeof item.title === "string";
+
+  const resolveRecommendation = async (
+    recommendation: MovieRecommendation,
+  ): Promise<Movie | null> => {
+    if (isTMDbMovieRecommendation(recommendation)) {
+      const movie = transformTMDbMovie({
+        adult: Boolean(recommendation.adult),
+        backdrop_path: recommendation.backdrop_path ?? null,
+        genre_ids: recommendation.genre_ids || [],
+        id: recommendation.id,
+        overview: recommendation.overview || "",
+        popularity: recommendation.popularity || 0,
+        poster_path: recommendation.poster_path ?? null,
+        release_date: recommendation.release_date || "",
+        title: recommendation.title,
+        video: Boolean(recommendation.video),
+        vote_average: recommendation.vote_average || 0,
+      });
+
+      if (movie.title && movie.posterPath) {
+        return movie;
+      }
+    }
+
+    const title = getRecommendationTitle(recommendation);
+    return title ? findMovieDetails(title) : null;
+  };
 
   const findMovieDetails = async (movieName: string): Promise<Movie | null> => {
     try {
@@ -82,20 +133,21 @@ export function GPTSearchPage({
     try {
       console.log(`[GPTSearch] Starting search for: "${trimmedQuery}"`);
 
-      const movieNames = await getMovieRecommendations(trimmedQuery);
-      console.log(`[GPTSearch] Groq recommended movies:`, movieNames);
+      const recommendations = await getMovieRecommendations(trimmedQuery);
+      console.log(`[GPTSearch] Groq recommended movies:`, recommendations);
 
-      if (!movieNames || movieNames.length === 0) {
+      if (!recommendations || recommendations.length === 0) {
         console.warn(`[GPTSearch] Groq returned no movie names`);
         setError("Could not get recommendations. Try another search.");
         setIsSearching(false);
         return;
       }
 
-      const moviePromises = movieNames.map((movieName: string) =>
-        findMovieDetails(movieName).catch((err) => {
+      const moviePromises = recommendations.map((recommendation) =>
+        resolveRecommendation(recommendation).catch((err) => {
+          const title = getRecommendationTitle(recommendation);
           console.error(
-            `[GPTSearch] Failed to fetch details for "${movieName}":`,
+            `[GPTSearch] Failed to resolve recommendation "${title}":`,
             err,
           );
           return null;
