@@ -48,17 +48,23 @@ function getRecommendationTitle(item: unknown) {
 }
 
 function normalizeRecommendation(item: unknown): MovieRecommendation | null {
-  const title = getRecommendationTitle(item);
-
-  if (!title) {
-    return null;
-  }
-
   if (typeof item === "string") {
+    const title = item.trim();
+
+    if (!title) {
+      return null;
+    }
+
     return title;
   }
 
   if (item && typeof item === "object") {
+    const title = getRecommendationTitle(item);
+
+    if (!title) {
+      return null;
+    }
+
     return item as TMDbMovieRecommendation;
   }
 
