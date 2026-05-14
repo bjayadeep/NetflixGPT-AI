@@ -48,34 +48,34 @@ export function MovieCard({
         }
         setIsHovered(false);
       }}
-      whileHover={{ y: -10, zIndex: 30 }}
+      whileHover={{ y: -12, zIndex: 50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <div
-        className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 shadow-xl transition-all duration-300 ease-out group-hover:shadow-[0_28px_70px_rgba(0,0,0,0.68)] md:w-48 lg:w-56"
+        className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 transition-all duration-300 ease-out md:w-48 lg:w-56"
         onClick={() => onMoreInfo(movie)}
       >
-        <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800 transform-gpu transition-transform duration-300 ease-out">
+        <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800 shadow-xl transform-gpu transition-all duration-300 ease-out group-hover:scale-[1.12] group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
           <img
             src={movie.posterPath}
             alt={movie.title}
-            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-0 scale-110" : "opacity-100 scale-100"}`}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-0 scale-110 brightness-110 contrast-110" : "opacity-100 scale-100 brightness-100 contrast-100"}`}
             loading="lazy"
           />
           <img
             src={previewImageUrl}
             alt={movie.title}
-            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-100 scale-110" : "opacity-0 scale-100"}`}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-100 scale-110 brightness-110 contrast-110" : "opacity-0 scale-100 brightness-100 contrast-100"}`}
             loading="lazy"
           />
 
           <div
             className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
           />
+        </div>
 
-          <div className="absolute left-3 top-3 z-20 rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
-            {movie.rating.toFixed(1)}
-          </div>
+        <div className="absolute left-3 top-3 z-[80] rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
+          {movie.rating.toFixed(1)}
         </div>
 
         {toggleMyList && (

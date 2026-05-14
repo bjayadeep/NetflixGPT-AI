@@ -68,7 +68,7 @@ export function MovieRow({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.025, duration: 0.34 }}
-              className="transition-opacity duration-300 hover:opacity-100 group-hover/row:opacity-55"
+              className="transition-opacity duration-300 hover:opacity-100 group-hover/row:opacity-70"
             >
               <MovieCard
                 movie={movie}
