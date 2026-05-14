@@ -4,8 +4,9 @@ import {
   BackendMovie,
   BackendGenre,
 } from "../services/backend";
-import { tmdbService } from "../services/tmdb";
+import { tmdbService, type TMDbMovie } from "../services/tmdb";
 import {
+  transformTMDbMovie,
   transformTMDbMovieDetails,
   transformTMDbTVDetails,
 } from "../utils/tmdbTransformers";
@@ -174,6 +175,7 @@ export async function loadRealMovies(): Promise<void> {
       let topRatedMovies: BackendMovie[] = [];
       let nowPlayingMovies: BackendMovie[] = [];
       let upcomingMovies: BackendMovie[] = [];
+      let trendingMovies: TMDbMovie[] = [];
       let teluguMovies: BackendMovie[] = [];
       let hindiMovies: BackendMovie[] = [];
       let romanticMovies: BackendMovie[] = [];
@@ -188,6 +190,7 @@ export async function loadRealMovies(): Promise<void> {
           topRated,
           nowPlaying,
           upcoming,
+          trending,
           telugu,
           hindi,
           romantic,
@@ -209,6 +212,10 @@ export async function loadRealMovies(): Promise<void> {
           }),
           backendService.getUpcomingMovies().catch((error) => {
             console.error("❌ Failed to fetch upcoming movies:", error);
+            return [];
+          }),
+          tmdbService.getTrendingMovies().catch((error) => {
+            console.error("Failed to fetch trending movies:", error);
             return [];
           }),
           backendService.getTeluguMovies().catch((error) => {
@@ -241,6 +248,7 @@ export async function loadRealMovies(): Promise<void> {
         topRatedMovies = topRated;
         nowPlayingMovies = nowPlaying;
         upcomingMovies = upcoming;
+        trendingMovies = trending;
         teluguMovies = telugu;
         hindiMovies = hindi;
         romanticMovies = romantic;
@@ -269,6 +277,9 @@ export async function loadRealMovies(): Promise<void> {
       const upcomingBase = upcomingMovies.map((m) =>
         transformBackendMovie(m, genres),
       );
+      const trendingBase = trendingMovies.map((m) =>
+        transformTMDbMovie(m, genres),
+      );
       const teluguBase = teluguMovies.map((m) =>
         transformBackendMovie(m, genres),
       );
@@ -292,6 +303,7 @@ export async function loadRealMovies(): Promise<void> {
       const topRated = topRatedBase;
       const nowPlaying = nowPlayingBase;
       const upcoming = upcomingBase;
+      const trending = trendingBase;
       const telugu = teluguBase;
       const hindi = hindiBase;
       const romantic = romanticBase;
@@ -303,11 +315,18 @@ export async function loadRealMovies(): Promise<void> {
         `📊 Transformed counts - Popular: ${popular.length}, Top Rated: ${topRated.length}, Now Playing: ${nowPlaying.length}, Upcoming: ${upcoming.length}, Telugu: ${telugu.length}, Hindi: ${hindi.length}, Romantic: ${romantic.length}, Thriller: ${thriller.length}, Horror: ${horror.length}, Comedy: ${comedy.length}`,
       );
 
-      // Set featured movie (first popular movie if available)
-      if (popularMovies.length > 0) {
-        console.log("⭐ Setting featured movie...");
+      // Set featured movie from a random pick among the top 5 trending movies.
+      if (trending.length > 0) {
+        console.log("Setting featured movie from trending movies...");
+        const topFiveTrending = trending.slice(0, 5);
+        const randomIndex = Math.floor(Math.random() * 5);
+        const featured = topFiveTrending[randomIndex] || topFiveTrending[0];
+        cachedFeaturedMovie = await getMovieWithDetails(featured);
+        console.log("Featured movie set:", cachedFeaturedMovie?.title);
+      } else if (popularMovies.length > 0) {
+        console.log("Setting featured movie from popular fallback...");
         cachedFeaturedMovie = await getMovieWithDetails(popular[0]);
-        console.log("🎯 Featured movie set:", cachedFeaturedMovie?.title);
+        console.log("Featured movie set:", cachedFeaturedMovie?.title);
       }
 
       // Create movie categories

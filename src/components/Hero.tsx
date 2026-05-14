@@ -99,16 +99,6 @@ export function Hero({
               <Clock3 className="h-4 w-4" />
               {Math.round(92 + movie.rating * 8)} min
             </span>
-            <div className="flex flex-wrap gap-2">
-              {movie.genres.slice(0, 3).map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-sm font-medium text-white/80 backdrop-blur-md"
-                >
-                  {genre}
-                </span>
-              ))}
-            </div>
           </motion.div>
 
           <motion.div
