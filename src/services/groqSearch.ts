@@ -14,7 +14,7 @@ export async function getMovieRecommendations(
       {
         role: "system",
         content:
-          'You are a movie recommendation expert. When given a search query, return ONLY a JSON array of 8-10 movie titles that best match. No explanation, no markdown, just the JSON array. Example: ["The Dark Knight", "Inception"]',
+          'You are a movie recommendation expert. When given a search query, return ONLY a JSON array of 12 popular, well-known movie titles that best match. Prioritize movies that are famous and widely available. Use exact official movie titles. No explanation, no markdown, just the JSON array. Example: ["The Dark Knight", "Inception"]',
       },
       {
         role: "user",

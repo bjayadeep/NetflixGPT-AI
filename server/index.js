@@ -122,6 +122,285 @@ async function sendMovieList(
   }
 }
 
+function cleanGroqText(text) {
+  return String(text || "")
+    .replace(/```(?:json)?/gi, "")
+    .trim();
+}
+
+function normalizeMovieTitle(title) {
+  return String(title || "")
+    .replace(/[*_~`#]/g, "")
+    .replace(/^\s*[-*]\s*/, "")
+    .replace(/^\s*[•–—]\s*/, "")
+    .replace(/^\s*\d+[.)]\s*/, "")
+    .replace(/^\s*movie\s*:\s*/i, "")
+    .replace(/\s*\(\d{4}\)\s*$/g, "")
+    .replace(/^\s*[\["'`]+|[\]"'`.,;]+$/g, "")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+}
+
+function parseJsonMovieTitles(clean) {
+  const parsed = JSON.parse(clean);
+
+  if (typeof parsed === "string") {
+    return parseTextMovieTitles(parsed);
+  }
+
+  const rawTitles = Array.isArray(parsed)
+    ? parsed
+    : parsed?.movies || parsed?.titles || [];
+
+  return Array.isArray(rawTitles)
+    ? rawTitles
+        .map(normalizeMovieTitle)
+        .filter(Boolean)
+    : [];
+}
+
+function parseTextMovieTitles(clean) {
+  const newlineTitles = clean
+    .split(/\r?\n/)
+    .map(normalizeMovieTitle)
+    .filter(Boolean);
+
+  if (newlineTitles.length > 1) {
+    return newlineTitles;
+  }
+
+  return clean
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map(normalizeMovieTitle)
+    .filter(Boolean);
+}
+
+function parseMovieTitles(text) {
+  const clean = cleanGroqText(text);
+
+  if (!clean) {
+    return [];
+  }
+
+  try {
+    const titles = parseJsonMovieTitles(clean);
+
+    if (titles.length > 0) {
+      return titles;
+    }
+  } catch (error) {
+    console.warn(
+      "[GPT Search] Groq response was not valid JSON; falling back to text parsing.",
+      error
+    );
+  }
+
+  const jsonArrayMatch = clean.match(/\[[\s\S]*\]/);
+
+  if (jsonArrayMatch) {
+    try {
+      return parseJsonMovieTitles(jsonArrayMatch[0]);
+    } catch (error) {
+      console.warn(
+        "[GPT Search] Embedded JSON array parse failed; falling back to text parsing.",
+        error
+      );
+    }
+  }
+
+  return parseTextMovieTitles(clean);
+}
+
+function uniqueTitles(titles) {
+  const seen = new Set();
+
+  return titles.filter((title) => {
+    const key = title.toLowerCase();
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function pickBestTMDbMatch(title, results) {
+  if (!Array.isArray(results) || results.length === 0) {
+    return null;
+  }
+
+  const normalizedTitle = title.toLowerCase();
+
+  return (
+    results.find((movie) =>
+      String(movie.title || "").toLowerCase() === normalizedTitle
+    ) ||
+    results.find((movie) =>
+      String(movie.original_title || "").toLowerCase() === normalizedTitle
+    ) ||
+    results.find((movie) => movie.poster_path) ||
+    results[0]
+  );
+}
+
+async function findTMDbMovie(title) {
+  console.log("TMDB QUERY:", title);
+
+  const data = await fetchFromTMDb(
+    `/search/movie?query=${encodeURIComponent(
+      title
+    )}&language=en-US&page=1&include_adult=false`
+  );
+
+  const results = data.results || [];
+
+  console.log("TMDB RESULTS:", results.length);
+
+  console.log(
+    `[GPT Search] TMDB search results for "${title}":`,
+    results.slice(0, 3).map((movie) => ({
+      id: movie.id,
+      title: movie.title,
+      release_date: movie.release_date,
+    }))
+  );
+
+  return pickBestTMDbMatch(title, results);
+}
+
+async function handleGptSearch(req, res) {
+  const query =
+    req.body?.query ||
+    req.query?.query ||
+    req.query?.q;
+
+  console.log("[GPT Search] Incoming query:", query);
+
+  if (!groq) {
+    console.error("[GPT Search] GROQ_API_KEY is missing.");
+
+    return res.status(500).json({
+      error: "Groq API key missing",
+      movies: [],
+    });
+  }
+
+  if (!query) {
+    console.warn("[GPT Search] Request missing query.");
+
+    return res.status(400).json({
+      error: "Query required",
+      movies: [],
+    });
+  }
+
+  let completion;
+
+  try {
+    completion =
+      await groq.chat.completions.create({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              'You are a movie recommendation expert. When given a search query, return ONLY a JSON array of 12 popular, well-known movie titles that best match. Prioritize movies that are famous and widely available. Use exact official movie titles. No explanation, no markdown, just the JSON array. Example: ["The Dark Knight", "Inception"]',
+          },
+          {
+            role: "user",
+            content: String(query),
+          },
+        ],
+      });
+  } catch (error) {
+    console.error("[GPT Search] Groq request failed:", error);
+
+    return res.status(502).json({
+      error: "Groq request failed",
+      movies: [],
+    });
+  }
+
+  const text =
+    completion.choices[0]?.message
+      ?.content || "";
+
+  console.log("[GPT Search] Raw Groq response:", completion);
+  console.log("RAW GROQ:", text);
+
+  const movieTitles = uniqueTitles(
+    parseMovieTitles(text)
+  ).slice(0, 12);
+
+  console.log("PARSED TITLES:", movieTitles);
+  console.log(
+    "[GPT Search] Parsed movie titles:",
+    movieTitles
+  );
+
+  if (movieTitles.length === 0) {
+    console.error(
+      "[GPT Search] Could not parse any movie titles from Groq response."
+    );
+
+      return res.status(502).json({
+        error:
+          "Could not parse movie titles from Groq response",
+        raw: text,
+        parsedTitles: movieTitles,
+        movies: [],
+      });
+  }
+
+  try {
+    const movies = (
+      await Promise.all(
+        movieTitles.map(async (title) => {
+          try {
+            return await findTMDbMovie(title);
+          } catch (error) {
+            console.error(
+              `[GPT Search] TMDB lookup failed for "${title}":`,
+              error
+            );
+            return null;
+          }
+        })
+      )
+    ).filter(Boolean);
+
+    console.log(
+      "[GPT Search] Matched TMDB movies:",
+      movies.map((movie) => ({
+        id: movie.id,
+        title: movie.title,
+      }))
+    );
+
+    if (movies.length === 0) {
+      console.error(
+        "[GPT Search] No TMDB matches found for parsed movie titles."
+      );
+    }
+
+    return res.json({
+      raw: text,
+      parsedTitles: movieTitles,
+      movies,
+    });
+  } catch (error) {
+    console.error("[GPT Search] Search route failed:", error);
+
+    return res.status(500).json({
+      error: "Movie search failed",
+      movies: [],
+    });
+  }
+}
+
 app.get("/api/genres", async (req, res) => {
   try {
     const data =
@@ -312,73 +591,10 @@ app.get(
   }
 );
 
-app.post(
-  "/api/gpt-search",
-  async (req, res) => {
-    try {
-      if (!groq) {
-        return res.status(500).json({
-          error:
-            "Groq API key missing",
-        });
-      }
-
-      const query =
-        req.body?.query;
-
-      if (!query) {
-        return res.status(400).json({
-          error: "Query required",
-        });
-      }
-
-      const completion =
-        await groq.chat.completions.create({
-          model: GROQ_MODEL,
-          messages: [
-            {
-              role: "system",
-              content:
-                'You are a movie recommendation expert. When given a search query, return ONLY a JSON array of 8-10 movie titles that best match. No explanation, no markdown, just the JSON array. Example: ["The Dark Knight", "Inception"]',
-            },
-            {
-              role: "user",
-              content: query,
-            },
-          ],
-        });
-
-      const text =
-        completion.choices[0]?.message
-          ?.content || "[]";
-
-      const clean = text
-        .replace(/```json|```/g, "")
-        .trim();
-
-      const parsedMovies =
-        JSON.parse(clean);
-
-      const movies = Array.isArray(parsedMovies)
-        ? parsedMovies
-            .map((movie) =>
-              String(movie).trim()
-            )
-            .filter(Boolean)
-        : [];
-
-      res.json({
-        movies,
-      });
-    } catch (error) {
-      console.error(error);
-
-      res.json({
-        movies: [],
-      });
-    }
-  }
-);
+app
+  .route("/api/gpt-search")
+  .get(handleGptSearch)
+  .post(handleGptSearch);
 
 app.use((req, res) => {
   res.status(404).json({
