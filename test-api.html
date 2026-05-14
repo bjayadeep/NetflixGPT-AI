@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TMDb API Test</title>
+  </head>
+  <body>
+    <h1>TMDb API Test</h1>
+    <div id="output"></div>
+
+    <script type="module">
+      const output = document.getElementById("output");
+
+      async function testAPI() {
+        const TMDB_TOKEN = "df9bede88cfe1740425f8a236363b66e";
+
+        try {
+          output.innerHTML += "<p>Testing TMDb API...</p>";
+
+          // Test genres
+          output.innerHTML += "<p>Fetching genres...</p>";
+          const genresResponse = await fetch(
+            `https://api.themoviedb.org/3/genre/movie/list?language=en&api_key=${TMDB_TOKEN}`,
+          );
+
+          if (!genresResponse.ok) {
+            output.innerHTML += `<p style="color: red;">Genres API failed: ${genresResponse.status} ${genresResponse.statusText}</p>`;
+            const errorText = await genresResponse.text();
+            output.innerHTML += `<p style="color: red;">Error: ${errorText}</p>`;
+            return;
+          }
+
+          const genresData = await genresResponse.json();
+          output.innerHTML += `<p style="color: green;">Genres fetched successfully: ${genresData.genres.length} genres</p>`;
+
+          // Test popular movies
+          output.innerHTML += "<p>Fetching popular movies...</p>";
+          const popularResponse = await fetch(
+            `https://api.themoviedb.org/3/movie/popular?language=en-US&page=1&api_key=${TMDB_TOKEN}`,
+          );
+
+          if (!popularResponse.ok) {
+            output.innerHTML += `<p style="color: red;">Popular movies API failed: ${popularResponse.status} ${popularResponse.statusText}</p>`;
+            const errorText = await popularResponse.text();
+            output.innerHTML += `<p style="color: red;">Error: ${errorText}</p>`;
+            return;
+          }
+
+          const popularData = await popularResponse.json();
+          output.innerHTML += `<p style="color: green;">Popular movies fetched successfully: ${popularData.results.length} movies</p>`;
+
+          if (popularData.results.length > 0) {
+            output.innerHTML += `<p style="color: green;">First movie: ${popularData.results[0].title}</p>`;
+          }
+        } catch (error) {
+          output.innerHTML += `<p style="color: red;">API test failed: ${error.message}</p>`;
+        }
+      }
+
+      testAPI();
+    </script>
+  </body>
+</html>
