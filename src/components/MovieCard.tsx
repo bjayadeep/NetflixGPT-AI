@@ -32,7 +32,7 @@ export function MovieCard({
 
   return (
     <motion.article
-      className="group relative shrink-0 cursor-pointer drop-shadow-lg"
+      className="group relative shrink-0 cursor-pointer overflow-visible drop-shadow-lg"
       onMouseEnter={() => {
         if (hoverDelayTimerRef.current) {
           window.clearTimeout(hoverDelayTimerRef.current);
@@ -52,35 +52,37 @@ export function MovieCard({
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
       <div
-        className="relative aspect-[2/3] w-40 snap-start overflow-hidden rounded-2xl bg-zinc-800 shadow-xl transition-all duration-200 group-hover:shadow-2xl md:w-48 lg:w-56"
+        className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 shadow-xl transition-all duration-200 group-hover:shadow-2xl md:w-48 lg:w-56"
         onClick={() => onMoreInfo(movie)}
       >
-        <img
-          src={movie.posterPath}
-          alt={movie.title}
-          className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-0 scale-105" : "opacity-100 scale-100"}`}
-          loading="lazy"
-        />
-        <img
-          src={previewImageUrl}
-          alt={movie.title}
-          className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-100 scale-105" : "opacity-0 scale-100"}`}
-          loading="lazy"
-        />
+        <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800">
+          <img
+            src={movie.posterPath}
+            alt={movie.title}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-0 scale-105" : "opacity-100 scale-100"}`}
+            loading="lazy"
+          />
+          <img
+            src={previewImageUrl}
+            alt={movie.title}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-100 scale-105" : "opacity-0 scale-100"}`}
+            loading="lazy"
+          />
 
-        <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
-        />
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}
+          />
 
-        <div className="absolute left-3 top-3 rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
-          {movie.rating.toFixed(1)}
+          <div className="absolute left-3 top-3 rounded-full border border-yellow-300/30 bg-black/65 px-2.5 py-1 text-xs font-bold text-yellow-200 shadow-lg backdrop-blur-md">
+            {movie.rating.toFixed(1)}
+          </div>
         </div>
 
         {toggleMyList && (
           <motion.div
             whileTap={{ scale: 0.86 }}
             animate={isInMyList ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-            className="pointer-events-auto absolute right-3 top-3 z-50"
+            className="pointer-events-auto absolute right-3 top-3 z-[80] overflow-visible"
           >
             <button
               type="button"
@@ -88,7 +90,7 @@ export function MovieCard({
                 e.stopPropagation();
                 toggleMyList(movie);
               }}
-              className="rounded-full bg-black/60 p-2 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/90 hover:shadow-2xl"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-black/60 p-0 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/90 hover:shadow-2xl"
               aria-label={isInMyList ? "Remove from My List" : "Add to My List"}
             >
               <Heart
