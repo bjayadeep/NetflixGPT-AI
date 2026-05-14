@@ -32,7 +32,7 @@ export function MovieCard({
 
   return (
     <motion.article
-      className="group relative shrink-0 cursor-pointer overflow-visible drop-shadow-lg"
+      className="group relative shrink-0 cursor-pointer overflow-visible drop-shadow-lg transition-transform duration-300 ease-out"
       onMouseEnter={() => {
         if (hoverDelayTimerRef.current) {
           window.clearTimeout(hoverDelayTimerRef.current);
@@ -48,24 +48,24 @@ export function MovieCard({
         }
         setIsHovered(false);
       }}
-      whileHover={{ y: -8, zIndex: 30 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+      whileHover={{ y: -10, zIndex: 30 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <div
-        className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 shadow-xl transition-all duration-200 group-hover:shadow-2xl md:w-48 lg:w-56"
+        className="relative aspect-[2/3] w-40 snap-start overflow-visible rounded-2xl bg-zinc-800 shadow-xl transition-all duration-300 ease-out group-hover:shadow-[0_28px_70px_rgba(0,0,0,0.68)] md:w-48 lg:w-56"
         onClick={() => onMoreInfo(movie)}
       >
         <div className="absolute inset-0 overflow-hidden rounded-2xl bg-zinc-800 transform-gpu transition-transform duration-300 ease-out">
           <img
             src={movie.posterPath}
             alt={movie.title}
-            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-0 scale-105" : "opacity-100 scale-100"}`}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-0 scale-110" : "opacity-100 scale-100"}`}
             loading="lazy"
           />
           <img
             src={previewImageUrl}
             alt={movie.title}
-            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-500 ease-in-out ${isHovered ? "opacity-100 scale-105" : "opacity-0 scale-100"}`}
+            className={`pointer-events-none absolute inset-0 w-full h-full object-cover transform-gpu transition-all duration-300 ease-out ${isHovered ? "opacity-100 scale-110" : "opacity-0 scale-100"}`}
             loading="lazy"
           />
 
